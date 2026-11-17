@@ -17,6 +17,8 @@ const bookElement = document.getElementById("book");
 
 const authorElement = document.getElementById("author");
 
+const tagsElement = document.getElementById("tags");
+
 const button = document.getElementById("newQuoteBtn");
 
 const counter = document.getElementById("counter");
@@ -140,51 +142,48 @@ async function loadQuotes() {
 // DISPLAY A RANDOM QUOTE
 // ==========================================
 
+
 function showNewQuote() {
 
-    if (quotes.length === 0) return;
+  if (quotes.length === 0) return;
 
-    let newIndex;
+  let newIndex;
 
+  // Avoid showing the same quote twice consecutively.
+  if (quotes.length === 1) {
+      newIndex = 0;
+  } else {
+      do {
+          newIndex = Math.floor(Math.random() * quotes.length);
+      } while (newIndex === currentIndex);
+  }
 
-    // Avoid showing the same quote twice consecutively.
+  currentIndex = newIndex;
 
-    if (quotes.length === 1) {
+  const selected = quotes[currentIndex];
 
-        newIndex = 0;
+  // Display quote information.
+  quoteElement.textContent = selected.quote;
+  bookElement.textContent = selected.book;
+  authorElement.textContent = selected.author;
 
-    } else {
+  // Display tags.
+  tagsElement.replaceChildren();
 
-        do {
+  selected.tags.forEach(tag => {
 
-            newIndex = Math.floor(Math.random() * quotes.length);
+      const tagElement = document.createElement("span");
 
-        } while (newIndex === currentIndex);
+      tagElement.className = "tag";
+      tagElement.textContent = tag;
 
-    }
+      tagsElement.appendChild(tagElement);
 
+  });
 
-    currentIndex = newIndex;
-
-
-    // Get selected quote.
-
-    const selected = quotes[currentIndex];
-
-
-    // Update website.
-
-    quoteElement.textContent = selected.quote;
-
-    bookElement.textContent = selected.book;
-
-    authorElement.textContent = selected.author;
-
-
-    // Update quote counter.
-
-    counter.textContent =
-        `Quote ${selected.id} · ${quotes.length} quotes in collection`;
+  // Display collection count (without quote ID).
+  counter.textContent =
+      `${quotes.length} quotes in collection`;
 
 }
 
