@@ -1,11 +1,12 @@
 
 // ==========================================
-// CONFIGURATION
+// GOOGLE SHEETS CONFIGURATION
 // ==========================================
 
 // Paste your published Google Sheets CSV URL here.
 
-const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS6TSGPp8Cn0UGahathfzyc0NLjRM15pSTe_qPFNbENJRarayixqOjaR2bUDRkVmcBQ6agscBpOiCXE/pub?gid=0&single=true&output=csv"
+const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS6TSGPp8Cn0UGahathfzyc0NLjRM15pSTe_qPFNbENJRarayixqOjaR2bUDRkVmcBQ6agscBpOiCXE/pub?gid=0&single=true&output=csv";
+
 
 // ==========================================
 // WEBSITE ELEMENTS
@@ -37,103 +38,152 @@ let currentIndex = -1;
 // LOAD QUOTES FROM GOOGLE SHEETS
 // ==========================================
 
-
 async function loadQuotes() {
 
-  try {
+    try {
 
-      button.disabled = true;
-      quoteElement.textContent = "Loading your quotes...";
+        quoteElement.textContent = "Loading your quotes...";
 
-      const response = await fetch(SHEET_URL);
+        button.disabled = true;
 
-      if (!response.ok) {
-          throw new Error(
-              "Google Sheets returned status " + response.status
-          );
-      }
+        // Fetch the published Google Sheets CSV.
 
-      const csvText = await response.text();
+        const response = await fetch(SHEET_URL);
 
-      console.log("CSV received:", csvText.slice(0, 500));
+        if (!response.ok) {
 
-      // Check that we received CSV rather than an HTML page.
-      if (csvText.trim().startsWith("<")) {
-          throw new Error(
-              "Received HTML instead of CSV. Check your published URL."
-          );
-      }
+            throw new Error(
+                "Google Sheets returned status " + response.status
+            );
 
-      const result = Papa.parse(csvText, {
-          header: true,
-          skipEmptyLines: true,
-          transformHeader: header => header.trim()
-      });
+        }
 
-      console.log("Parsed spreadsheet:", result.data);
+        const csvText = await response.text();
 
-      // Check column names.
-      const headers = result.meta.fields || [];
+        console.log("CSV received:", csvText.slice(0, 500));
 
-      const requiredColumns = [
-          "ID",
-          "Quote",
-          "Author",
-          "Book",
-          "Tags"
-      ];
 
-      const missingColumns = requiredColumns.filter(
-          column => !headers.includes(column)
-      );
+        // Parse CSV.
 
-      if (missingColumns.length > 0) {
-          throw new Error(
-              "Missing columns: " + missingColumns.join(", ")
-          );
-      }
+        const result = Papa.parse(csvText, {
 
-      // Convert spreadsheet rows into quote objects.
-      quotes = result.data.map(row => ({
+            header: true,
 
-          id: row["ID"]?.trim() || "",
+            skipEmptyLines: true,
 
-          quote: row["Quote"]?.trim() || "",
+            transformHeader: header => header.trim()
 
-          author: row["Author"]?.trim() || "",
+        });
 
-          book: row["Book"]?.trim() || "",
 
-          tags: row["Tags"]
-              ?.split(",")
-              .map(tag => tag.trim())
-              .filter(Boolean) || []
+        // Check CSV parsing errors.
 
-      })).filter(item => item.id && item.quote);
+        if (result.errors.length > 0) {
 
-      if (quotes.length === 0) {
-          throw new Error("No valid quotes found in your sheet.");
-      }
+            console.warn("CSV parsing warnings:", result.errors);
 
-      showNewQuote();
+        }
 
-      console.log("Successfully loaded", quotes.length, "quotes.");
 
-  } catch (error) {
+        // Check column names.
 
-      console.error("Quote loading error:", error);
+        const headers = result.meta.fields || [];
 
-      quoteElement.textContent = error.message;
+        console.log("CSV headers:", headers);
 
-      bookElement.textContent = "";
-      authorElement.textContent = "";
-      counter.textContent = "";
+        const requiredColumns = [
+            "ID",
+            "Quote",
+            "Author",
+            "Book",
+            "Tags"
+        ];
 
-  } finally {
+        const missingColumns = requiredColumns.filter(
+            column => !headers.includes(column)
+        );
 
-      button.disabled = quotes.length === 0;
+        if (missingColumns.length > 0) {
 
-  }
+            throw new Error(
+                "Missing spreadsheet columns: " +
+                missingColumns.join(", ")
+            );
+
+        }
+
+
+        // Convert spreadsheet rows into quote objects.
+
+        quotes = result.data
+
+            .map((row, index) => ({
+
+                // Use existing ID or generate one automatically.
+
+                id: row["ID"]?.trim() ||
+                    `Q${String(index + 1).padStart(3, "0")}`,
+
+                quote: row["Quote"]?.trim() || "",
+
+                author: row["Author"]?.trim() || "",
+
+                book: row["Book"]?.trim() || "",
+
+                tags: row["Tags"]
+
+                    ?.split(",")
+
+                    .map(tag => tag.trim())
+
+                    .filter(Boolean) || []
+
+            }))
+
+            // Keep rows that have quote text.
+
+            .filter(item => item.quote);
+
+
+        console.log("Successfully loaded quotes:", quotes);
+
+
+        // Check if any quotes were found.
+
+        if (quotes.length === 0) {
+
+            throw new Error(
+                "No quotes found. Check that your Quotes tab contains quote text."
+            );
+
+        }
+
+
+        // Display the first random quote.
+
+        showNewQuote();
+
+
+    } catch (error) {
+
+        console.error("Quote loading error:", error);
+
+        quoteElement.textContent =
+            "Oops! " + error.message;
+
+        bookElement.textContent = "";
+
+        authorElement.textContent = "";
+
+        tagsElement.replaceChildren();
+
+        counter.textContent = "";
+
+    } finally {
+
+        button.disabled = quotes.length === 0;
+
+    }
 
 }
 
@@ -142,54 +192,94 @@ async function loadQuotes() {
 // DISPLAY A RANDOM QUOTE
 // ==========================================
 
-
 function showNewQuote() {
 
-  if (quotes.length === 0) return;
+    if (quotes.length === 0) return;
 
-  let newIndex;
 
-  // Avoid showing the same quote twice consecutively.
-  if (quotes.length === 1) {
-      newIndex = 0;
-  } else {
-      do {
-          newIndex = Math.floor(Math.random() * quotes.length);
-      } while (newIndex === currentIndex);
-  }
+    let newIndex;
 
-  currentIndex = newIndex;
 
-  const selected = quotes[currentIndex];
+    // Avoid showing the same quote twice consecutively.
 
-  // Display quote information.
-  quoteElement.textContent = selected.quote;
-  bookElement.textContent = selected.book;
-  authorElement.textContent = selected.author;
+    if (quotes.length === 1) {
 
-  // Display tags.
-  tagsElement.replaceChildren();
+        newIndex = 0;
 
-  selected.tags.forEach(tag => {
+    } else {
 
-      const tagElement = document.createElement("span");
+        do {
 
-      tagElement.className = "tag";
-      tagElement.textContent = tag;
+            newIndex = Math.floor(
+                Math.random() * quotes.length
+            );
 
-      tagsElement.appendChild(tagElement);
+        } while (newIndex === currentIndex);
 
-  });
+    }
 
-  // Display collection count (without quote ID).
-  counter.textContent =
-      `${quotes.length} quotes in collection`;
+
+    currentIndex = newIndex;
+
+
+    // Get selected quote.
+
+    const selected = quotes[currentIndex];
+
+
+    // Display quote.
+
+    quoteElement.textContent = selected.quote;
+
+
+    // Display book title.
+
+    bookElement.textContent = selected.book;
+
+
+    // Display author.
+
+    authorElement.textContent = selected.author;
+
+
+    // ======================================
+    // DISPLAY TAGS
+    // ======================================
+
+    // Clear tags from the previous quote.
+
+    tagsElement.replaceChildren();
+
+
+    // Create a tag element for each tag.
+
+    selected.tags.forEach(tag => {
+
+        const tagElement = document.createElement("span");
+
+        tagElement.className = "tag";
+
+        tagElement.textContent = tag;
+
+        tagsElement.appendChild(tagElement);
+
+    });
+
+
+    // ======================================
+    // UPDATE QUOTE COUNTER
+    // ======================================
+
+    // Do not display the quote ID.
+
+    counter.textContent =
+        `${quotes.length} quotes in collection`;
 
 }
 
 
 // ==========================================
-// BUTTON EVENT
+// NEW QUOTE BUTTON
 // ==========================================
 
 button.addEventListener("click", showNewQuote);

@@ -116,21 +116,52 @@ main {
 }
 
 
-/* BOOK TITLE */
+/* =====================================
+ BOOK AND AUTHOR
+===================================== */
 
 .book {
   font-size: 14px;
   font-weight: 600;
+  line-height: 1.5;
 }
-
-
-/* AUTHOR */
 
 .author {
   font-size: 13px;
   color: #999184;
 
   margin-top: 7px;
+}
+
+
+/* =====================================
+ QUOTE TAGS
+===================================== */
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+
+  justify-content: center;
+  gap: 8px;
+
+  margin-top: 25px;
+}
+
+.tag {
+  background: #F3EFE7;
+  color: #8A7658;
+
+  border: 1px solid #EAE3D7;
+  border-radius: 20px;
+
+  padding: 6px 13px;
+
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+
+  letter-spacing: 0.3px;
 }
 
 
@@ -215,6 +246,10 @@ footer {
       font-size: 27px;
   }
 
+  header p {
+      font-size: 12px;
+  }
+
   .quote-card {
       padding: 45px 25px;
   }
@@ -227,34 +262,9 @@ footer {
       padding: 30px 18px;
   }
 
-}
+  .tag {
+      font-size: 10px;
+      padding: 6px 11px;
+  }
 
-
-/* =====================================
-   QUOTE TAGS
-===================================== */
-
-.tags {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 8px;
-
-  margin-top: 25px;
-}
-
-.tag {
-  background: #F3EFE7;
-  color: #8A7658;
-
-  border: 1px solid #EAE3D7;
-  border-radius: 20px;
-
-  padding: 6px 13px;
-
-  font-family: 'DM Sans', sans-serif;
-  font-size: 11px;
-  font-weight: 500;
-
-  letter-spacing: 0.3px;
 }
