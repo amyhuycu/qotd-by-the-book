@@ -1,0 +1,89 @@
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Between the Pages.</title>
+
+    <meta name="description" content="A personal collection of meaningful quotes from books.">
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="style.css">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+
+</head>
+
+<body>
+
+    <!-- HEADER -->
+
+    <header>
+        <h1>Between the Pages.</h1>
+
+        <p>A little collection of words worth remembering.</p>
+    </header>
+
+
+    <!-- MAIN CONTENT -->
+
+    <main>
+
+        <section class="quote-card">
+
+            <div class="quote-mark">“</div>
+
+            <p id="quote" aria-live="polite">
+                Loading your quote...
+            </p>
+
+            <div class="quote-divider"></div>
+
+            <p id="book" class="book"></p>
+
+            <p id="author" class="author"></p>
+
+        </section>
+
+
+        <!-- NEW QUOTE BUTTON -->
+
+        <button id="newQuoteBtn" disabled>
+            Another quote ↗
+        </button>
+
+
+        <!-- QUOTE COUNTER -->
+
+        <p id="counter" class="counter">
+            Loading collection...
+        </p>
+
+    </main>
+
+
+    <!-- FOOTER -->
+
+    <footer>
+        Made with love & a lot of books.
+    </footer>
+
+
+    <!-- CSV PARSER -->
+
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+
+    <!-- JAVASCRIPT -->
+
+    <script src="script.js"></script>
+
+</body>
+
+</html>
