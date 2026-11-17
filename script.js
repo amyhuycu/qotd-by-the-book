@@ -35,89 +35,103 @@ let currentIndex = -1;
 // LOAD QUOTES FROM GOOGLE SHEETS
 // ==========================================
 
+
 async function loadQuotes() {
 
-    try {
+  try {
 
-        quoteElement.textContent = "Loading your quotes...";
+      button.disabled = true;
+      quoteElement.textContent = "Loading your quotes...";
 
-        button.disabled = true;
+      const response = await fetch(SHEET_URL);
 
-        const response = await fetch(SHEET_URL);
+      if (!response.ok) {
+          throw new Error(
+              "Google Sheets returned status " + response.status
+          );
+      }
 
-        if (!response.ok) {
-            throw new Error("Unable to access Google Sheets.");
-        }
+      const csvText = await response.text();
 
-        const csvText = await response.text();
+      console.log("CSV received:", csvText.slice(0, 500));
 
-        const result = Papa.parse(csvText, {
+      // Check that we received CSV rather than an HTML page.
+      if (csvText.trim().startsWith("<")) {
+          throw new Error(
+              "Received HTML instead of CSV. Check your published URL."
+          );
+      }
 
-            header: true,
+      const result = Papa.parse(csvText, {
+          header: true,
+          skipEmptyLines: true,
+          transformHeader: header => header.trim()
+      });
 
-            skipEmptyLines: true,
+      console.log("Parsed spreadsheet:", result.data);
 
-            transformHeader: header => header.trim()
+      // Check column names.
+      const headers = result.meta.fields || [];
 
-        });
+      const requiredColumns = [
+          "ID",
+          "Quote",
+          "Author",
+          "Book",
+          "Tags"
+      ];
 
+      const missingColumns = requiredColumns.filter(
+          column => !headers.includes(column)
+      );
 
-        // Convert spreadsheet rows into quote objects.
+      if (missingColumns.length > 0) {
+          throw new Error(
+              "Missing columns: " + missingColumns.join(", ")
+          );
+      }
 
-        quotes = result.data
+      // Convert spreadsheet rows into quote objects.
+      quotes = result.data.map(row => ({
 
-            .map(row => ({
+          id: row["ID"]?.trim() || "",
 
-                id: row["ID"]?.trim() || "",
+          quote: row["Quote"]?.trim() || "",
 
-                quote: row["Quote"]?.trim() || "",
+          author: row["Author"]?.trim() || "",
 
-                author: row["Author"]?.trim() || "",
+          book: row["Book"]?.trim() || "",
 
-                book: row["Book"]?.trim() || "",
+          tags: row["Tags"]
+              ?.split(",")
+              .map(tag => tag.trim())
+              .filter(Boolean) || []
 
-                tags: row["Tags"]
-                    ?.split(",")
-                    .map(tag => tag.trim())
-                    .filter(Boolean) || []
+      })).filter(item => item.id && item.quote);
 
-            }))
+      if (quotes.length === 0) {
+          throw new Error("No valid quotes found in your sheet.");
+      }
 
-            // Only keep quotes with an ID and quote text.
+      showNewQuote();
 
-            .filter(item => item.id && item.quote);
+      console.log("Successfully loaded", quotes.length, "quotes.");
 
+  } catch (error) {
 
-        if (quotes.length === 0) {
+      console.error("Quote loading error:", error);
 
-            throw new Error("No valid quotes found.");
+      quoteElement.textContent = error.message;
 
-        }
+      bookElement.textContent = "";
+      authorElement.textContent = "";
+      counter.textContent = "";
 
+  } finally {
 
-        // Display the first random quote.
+      button.disabled = quotes.length === 0;
 
-        showNewQuote();
-
-
-    } catch (error) {
-
-        console.error("Error:", error);
-
-        quoteElement.textContent =
-            "Oops! We couldn't load your quotes. Please try again later.";
-
-        bookElement.textContent = "";
-
-        authorElement.textContent = "";
-
-        counter.textContent = "";
-
-    } finally {
-
-        button.disabled = quotes.length === 0;
-
-    }
+  }
 
 }
 
